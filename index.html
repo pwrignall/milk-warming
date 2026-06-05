@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Milk Warming Calculator</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍼</text></svg>">
+  <style>
+    :root {
+      --blue: #3b82f6;
+      --blue-dark: #1d4ed8;
+      --blue-light: #eff6ff;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --warn-bg: #fffbeb;
+      --warn-border: #fde68a;
+      --warn-text: #92400e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 28px 16px 48px;
+    }
+
+    .container { max-width: 460px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 28px; }
+    header h1 { font-size: 1.6rem; font-weight: 700; color: var(--blue-dark); }
+    header p { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 14px;
+    }
+
+    .card-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .presets {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .preset-btn {
+      padding: 7px 14px;
+      border: 2px solid var(--border);
+      background: white;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.12s, background 0.12s, color 0.12s;
+      line-height: 1;
+    }
+
+    .preset-btn:hover { border-color: var(--blue); color: var(--blue); }
+
+    .preset-btn.active {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: white;
+    }
+
+    .volume-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .volume-input-row input[type="number"] {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.12s;
+    }
+
+    .volume-input-row input[type="number"]:focus { border-color: var(--blue); }
+
+    .volume-input-row .unit {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+      white-space: nowrap;
+    }
+
+    .results { display: grid; gap: 14px; }
+
+    .result-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 18px 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .result-icon { font-size: 1.8rem; width: 44px; text-align: center; flex-shrink: 0; }
+
+    .result-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+
+    .result-value {
+      font-size: 1.85rem;
+      font-weight: 700;
+      color: var(--blue-dark);
+      line-height: 1;
+    }
+
+    .result-hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    .warn {
+      background: var(--warn-bg);
+      border: 1px solid var(--warn-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 0.82rem;
+      color: var(--warn-text);
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 28px;
+      line-height: 1.6;
+    }
+
+    .details-toggle {
+      background: none;
+      border: none;
+      color: var(--blue);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 4px 0;
+      margin-top: 8px;
+      text-decoration: underline;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .details-box {
+      display: none;
+      margin-top: 10px;
+      background: var(--blue-light);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: #1e3a8a;
+      line-height: 1.6;
+    }
+
+    .details-box.open { display: block; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>🍼 Milk Warming Calculator</h1>
+    <p>Physics-based guide for warming refrigerated breastmilk</p>
+  </header>
+
+  <div class="card">
+    <div class="card-label">Milk volume</div>
+    <div class="presets" id="presets">
+      <button class="preset-btn active" data-v="40">40</button>
+      <button class="preset-btn" data-v="60">60</button>
+      <button class="preset-btn" data-v="80">80</button>
+      <button class="preset-btn" data-v="100">100</button>
+      <button class="preset-btn" data-v="120">120</button>
+      <button class="preset-btn" data-v="150">150</button>
+    </div>
+    <div class="volume-input-row">
+      <input type="number" id="vol" value="40" min="10" max="350" step="10">
+      <span class="unit">mL</span>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="result-card">
+      <div class="result-icon">💧</div>
+      <div>
+        <div class="result-label">Water volume</div>
+        <div class="result-value" id="out-vol">—</div>
+        <div class="result-hint">fill into a Pyrex jug or bowl</div>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="result-icon">🌡️</div>
+      <div>
+        <div class="result-label">Starting water temperature</div>
+        <div class="result-value" id="out-temp">—</div>
+        <div class="result-hint">measure before submerging bottle</div>
+      </div>
+    </div>
+    <div class="result-card">
+      <div class="result-icon">⏱️</div>
+      <div>
+        <div class="result-label">Submersion time</div>
+        <div class="result-value" id="out-time">—</div>
+        <div class="result-hint">milk reaches ~37°C; cannot overheat</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="warn">
+    ⚠️ Always test temperature on your inner wrist before feeding. Assumes bottle was stored at 4°C (fridge). Do not use a microwave — it creates dangerous hot spots.
+  </div>
+
+  <button class="details-toggle" id="toggle-details">How is this calculated?</button>
+  <div class="details-box" id="details-box">
+    <strong>Physics model:</strong> The water volume is chosen so the system reaches thermal equilibrium at 37.5°C — meaning the milk physically cannot exceed that temperature, however long you wait.
+    The starting water temperature is derived from the law of conservation of energy: heat lost by water = heat gained by milk.
+    Warming time uses Newton's law of cooling with a two-body exchange model, estimating the bottle's heat transfer from its surface area.
+    Assumes a standard glass baby bottle at fridge temperature (4°C).
+  </div>
+
+</div>
+
+<footer>
+  Calculations based on thermal equilibrium and Newton's law of cooling.<br>
+  Breastmilk c<sub>p</sub> ≈ 3.9 J/g·K · Fridge temperature 4°C · Target 37°C
+</footer>
+
+<script>
+  // Physical constants
+  const T_FRIDGE = 4;          // °C, refrigerator temperature
+  const T_BODY   = 37;         // °C, target feed temperature
+  const T_EQ     = 37.5;       // °C, equilibrium target — milk can't exceed this
+  const C_MILK   = 3.9;        // J/(g·K), specific heat breastmilk
+  const C_WATER  = 4.18;       // J/(g·K), specific heat water
+  const RHO_MILK = 1.03;       // g/mL, density breastmilk
+  const H_EFF    = 250;        // W/(m²·K), effective heat transfer coeff (bottle wall + convection)
+  const A_REF    = 0.018;      // m², bottle surface area at 150 mL reference
+  const V_REF    = 150;        // mL, reference volume for area scaling
+
+  function calculate(vol) {
+    // Water volume: enough to submerge bottle, rounded up to 25 mL
+    const waterExact = Math.max(1.5 * vol, 200);
+    const waterVol   = Math.ceil(waterExact / 25) * 25;
+
+    const mMilk = RHO_MILK * vol;   // g
+    const mWater = waterVol;         // g (ρ_water = 1)
+
+    const C1 = mMilk  * C_MILK;     // J/K
+    const C2 = mWater * C_WATER;    // J/K
+
+    // Starting water temp so thermal equilibrium lands at T_EQ
+    // Derived from: C1·T_FRIDGE + C2·T_water = (C1+C2)·T_EQ
+    const T_water = T_EQ + (C1 / C2) * (T_EQ - T_FRIDGE);
+
+    // Bottle surface area scales with V^(2/3)
+    const A  = A_REF * Math.pow(vol / V_REF, 2 / 3);
+    const UA = H_EFF * A;  // W/K
+
+    // Two-body effective time constant (seconds)
+    // τ = (C1·C2) / (UA·(C1+C2))
+    const tau = (C1 * C2) / (UA * (C1 + C2));
+
+    // Solve T_milk(t) = T_BODY using exponential approach to T_EQ
+    const t_sec = -tau * Math.log((T_BODY - T_EQ) / (T_FRIDGE - T_EQ));
+    const t_min = Math.max(1, Math.round(t_sec / 60));
+
+    return {
+      waterVol,
+      waterTemp: Math.round(T_water),
+      timeMin: t_min
+    };
+  }
+
+  function render() {
+    const vol = Number(document.getElementById('vol').value);
+    if (!Number.isFinite(vol) || vol < 10 || vol > 350) return;
+
+    const r = calculate(vol);
+    document.getElementById('out-vol').textContent  = r.waterVol  + ' mL';
+    document.getElementById('out-temp').textContent = r.waterTemp + '°C';
+    document.getElementById('out-time').textContent = r.timeMin   + ' min';
+
+    // Sync preset button highlight
+    document.querySelectorAll('.preset-btn').forEach(b => {
+      b.classList.toggle('active', Number(b.dataset.v) === vol);
+    });
+  }
+
+  document.getElementById('presets').addEventListener('click', e => {
+    if (!e.target.matches('.preset-btn')) return;
+    document.getElementById('vol').value = e.target.dataset.v;
+    render();
+  });
+
+  document.getElementById('vol').addEventListener('input', render);
+
+  document.getElementById('toggle-details').addEventListener('click', () => {
+    const box = document.getElementById('details-box');
+    const btn = document.getElementById('toggle-details');
+    const open = box.classList.toggle('open');
+    btn.textContent = open ? 'Hide details' : 'How is this calculated?';
+  });
+
+  render();
+</script>
+</body>
+</html>
